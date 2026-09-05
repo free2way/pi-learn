@@ -446,7 +446,7 @@ function ConceptAtlas({ onStart }: { onStart: () => void }) {
           <span className="eyebrow">AGENT LEARNING ATLAS · PI v0.84.4</span>
           <h1>先建立学习闭环，<br />再组合系统能力。</h1>
         </div>
-        <p>从学习方法到生产执行共五层。先掌握可迁移的 Agent 概念，再用 PI 的运行证据逐层验证。</p>
+        <p>从学习方法到生产执行共六层。先掌握可迁移的 Agent 概念，再用 PI 的运行证据逐层验证。</p>
       </div>
 
       <div className="concept-stage">

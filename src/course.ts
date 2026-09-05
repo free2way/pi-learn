@@ -429,44 +429,44 @@ process.on("SIGINT", () => child.kill("SIGINT"))`,
     title: '从一个 Agent 到一支小队',
     subtitle: '隔离上下文、并行与链式委派',
     duration: '120 分钟',
-    outcome: '你会实现 Scout → Planner → Worker → Reviewer 的协作闭环。',
-    why: 'PI 刻意不内置 sub-agent。官方示例通过独立 PI 进程获得隔离上下文，再支持 single / parallel / chain。关键不是数量，而是清楚的角色、最小工具权限和可合并的输出。',
-    concepts: ['Context isolation', 'Role contract', 'Parallel fan-out', 'Chain handoff'],
+    outcome: '你会用 pi-subagents 实现 Scout → Worker → Reviewer 的隔离协作闭环。',
+    why: 'PI core 保持最小，子代理能力由 Extension 组合。pi-subagents 把独立会话、前台/后台任务、工作流、FleetView 与预算控制放进同一套编排工具；关键不是代理数量，而是清楚的角色、最小权限、隔离写入和可合并证据。',
+    concepts: ['Context isolation', 'Role contract', 'Parallel fan-out', 'Worktree isolation', 'Spawn budget'],
     steps: [
       {
-        title: '取得官方 subagent 示例',
-        detail: '克隆 PI 仓库，仅把示例作为参考与实验依赖。官方示例包含 agents、prompts、并行与链式执行。',
-        command: 'git clone --branch v0.84.4 --depth 1 https://github.com/earendil-works/pi.git vendor/pi\ncd vendor/pi\nnpm install && npm run build',
-        expected: 'packages/coding-agent/examples/extensions/subagent 可读取。',
-        check: '示例目录含 index.ts、agents.ts、agents/',
+        title: '项目级安装并做健康检查',
+        detail: '把 pi-subagents 固定在项目 settings 中，重载后运行诊断。后台子 Agent 依赖 npm 安装版 PI；单文件 binary 只支持前台执行。',
+        command: 'pi install -l npm:pi-subagents@0.65.1\n# 重启 PI 后\n/subagents-doctor\n/subagents-fleet',
+        expected: '诊断显示扩展、Agent 定义与运行环境可用，FleetView 能打开。',
+        check: '包版本、PI 安装形态与后台能力均有明确结果',
       },
       {
-        title: '安装 subagent Extension',
-        detail: '按官方 README 把 extension、agent definitions 与 prompts 链接到用户级 PI 目录。',
-        command: 'cd vendor/pi\nmkdir -p ~/.pi/agent/extensions/subagent ~/.pi/agent/agents ~/.pi/agent/prompts\n# 按官方 README 创建符号链接，再在 PI 中 /reload',
-        expected: 'PI 能发现 subagent 工具，以及 /implement 等模板。',
-        check: 'Agent 列表出现 scout / planner / reviewer / worker',
+        title: '检查角色与最小工具集',
+        detail: '读取内置 scout、researcher、worker、reviewer、oracle 与 delegate 的职责。为写 Agent 明确允许目录，为审查 Agent 保持只读。',
+        command: '请列出可用 subagents、各自工具权限和适用任务；指出哪些角色允许写文件。',
+        expected: '每个角色都有输入契约、输出格式、工具白名单与停止条件。',
+        check: 'Reviewer 不参与实现，Scout 不拥有不必要的写权限',
       },
       {
         title: '执行并行侦察',
-        detail: '两个 scout 使用只读工具在隔离上下文中并行工作，各自返回压缩结论。',
-        command: 'Run 2 scouts in parallel: one map the SDK API, one find all session persistence code.',
-        expected: '界面同时流式显示 2 个任务，最终为 2/2 done。',
-        check: '两份输出互不包含对方历史',
+        detail: '让三个只读 Reviewer 分别检查正确性、测试缺口和复杂度。只有互不依赖的读任务才并行，最终由父 Agent 合并证据。',
+        command: '并行派生 3 个只读子 Agent：分别审查 correctness、tests、complexity；返回文件位置与可复现证据。',
+        expected: 'FleetView 同时显示 3 个隔离任务，父 Agent 得到三份结构化结果。',
+        check: '输出包含来源位置，且没有子 Agent 修改工作树',
       },
       {
         title: '执行链式交付',
-        detail: '使用 implement-and-review：Worker 实现，Reviewer 独立审查，Worker 根据反馈修订。',
-        command: '/implement-and-review 给 sdk-runner 增加 60 秒超时与 SIGINT 清理',
-        expected: '同一目标产生实现、审查意见、修订三段可追踪输出。',
-        check: '最终测试通过且审查问题被逐项回应',
+        detail: '采用 clarify → scout → worker → fresh reviewer → worker 的闭环。写 Agent 使用独立 worktree，Reviewer 从干净上下文审查 diff。',
+        command: '为 sdk-runner 增加 60 秒超时：先 scout 定位，再让 worker 在隔离 worktree 实现，最后由 fresh reviewer 验收。',
+        expected: '同一目标产生侦察、实现、独立审查与修订记录，写入互不覆盖。',
+        check: '最终测试通过、审查问题逐项回应、合并目标明确',
       },
       {
-        title: '故意制造失败',
-        detail: '给 worker 一个不存在的模型或让任务超时，验证父 Agent 收到失败诊断且 chain 停止。',
-        command: '将测试 agent 的 model 临时改成 invalid-model，运行一次 chain。',
-        expected: '失败被归因到具体 agent / step，不启动后续 reviewer。',
-        check: '失败不会伪装成成功，也不会遗留子进程',
+        title: '限制预算并注入失败',
+        detail: '给一次运行设置并发、轮次和 spawn 上限，再让测试 Agent 超时。spawn 总预算与并发槽是两种不同约束，均应在运行前可见。',
+        command: '先用 /subagents-guide 查看 budget 配置，将测试工作流限制为最多 3 次派生，再给 worker 一个必定超时的 fixture。',
+        expected: '失败归因到具体 Agent/步骤；预算阻止继续派生，后续 Reviewer 不会误启动。',
+        check: '失败不伪装成成功，不遗留子进程或未说明的工作树',
       },
     ],
     codeTitle: '.pi/agents/reviewer.md',
@@ -492,7 +492,8 @@ tools: read, grep, find, ls, bash
       'reviewer    ✓  APPROVED',
       '✓ 5 agents · 3 isolated contexts · $0.18',
     ],
-    source: 'https://github.com/earendil-works/pi/tree/v0.84.4/packages/coding-agent/examples/extensions/subagent',
+    source: 'https://github.com/nicobailon/pi-subagents',
+    sourceLabel: 'pi-subagents 仓库',
   },
   {
     id: 'platform',
@@ -1593,6 +1594,109 @@ Parallelism：独立分支才并行         subagent / DAG / worktree
   sourceLabel: '路线来源 · 视频',
 }
 
+const ecosystemStackModule: CourseModule = {
+  id: 'ecosystem-stack',
+  index: '00',
+  phase: '扩展',
+  title: '组装 PI 的六层能力栈',
+  subtitle: '网络、记忆、任务状态、子 Agent、MCP 与上下文节流',
+  duration: '3–4 小时',
+  level: '进阶',
+  practice: '生态集成',
+  version: '生态快照 · 2026-09-05',
+  prerequisites: ['完成 Session、Context 与 Pi Package 模块', 'Node.js >= 22.19.0', '准备无敏感数据的测试仓库'],
+  deliverables: ['六项能力清单与版本锁定', '凭据与数据流向图', '六组可复现 smoke evidence', '上下文节省对照记录'],
+  pitfalls: ['把 Todo 当成长时记忆', '让多个写 Agent 共用工作树', '把 mcpScript 或 context-mode 当成安全沙箱', '未审源码就给第三方包完整系统权限'],
+  outcome: '你会把六个生态组件接入一个项目，并用可观察证据确认它们各自解决的问题与边界。',
+  why: '这六项不是同一类“插件”：pi-web-access 扩展观察面，pi-memory 保存跨会话知识，rpiv-todo 维护当前工作状态，pi-subagents 提供委派，pi-mcp-adapter 延迟接入外部能力，context-mode 把大体积证据移出主上下文。分层后才知道数据放哪里、何时回取、谁能执行，以及失败应在哪里处理。',
+  concepts: ['External observation', 'Durable memory', 'Working state', 'Delegation', 'Lazy MCP', 'Context offloading'],
+  steps: [
+    {
+      title: '用 pi-web-access 建立外部证据链',
+      detail: '项目级安装后，先 web_search 找候选来源，再 source_check 验证关键主张，最后 fetch_content/get_search_content 读取网页、仓库、PDF 或视频。搜索后端的 API Key 放在用户配置，不进入仓库；视频帧能力还需 ffmpeg/yt-dlp。',
+      command: 'pi install -l npm:pi-web-access@0.28.0\n# 重启 PI 后：搜索一个技术主张，检查来源，再抓取一篇文档和一个短视频',
+      expected: '得到带来源的摘要、可回取的完整内容 ID，以及一次网页或视频提取记录。',
+      check: '结论能追溯到原始 URL；主上下文没有被整页原文淹没',
+      failure: '关闭搜索后端凭据再执行一次，确认错误能指出缺失配置，而不是生成无来源答案。',
+    },
+    {
+      title: '用 pi-memory 做跨会话召回',
+      detail: '区分 MEMORY.md 的精选长期事实、daily 日志和 SCRATCHPAD 临时状态。写入一条无敏感信息的偏好，新开会话后用 memory_search/read 找回；qmd 才提供语义/深度检索，首次嵌入可能下载模型。',
+      command: 'pi install -l npm:pi-memory@0.4.2\nnpm install -g @tobilu/qmd\n# 重启后依次使用 memory_status、memory_write、/new、memory_search、memory_forget、memory_restore',
+      expected: '~/.pi/agent/memory/ 中形成可读 Markdown；新会话能召回、遗忘并恢复测试事实。',
+      check: '能说明长期记忆、每日日志、scratchpad 与 Session JSONL 的差别',
+      failure: '写入一条测试事实后删除，再验证默认搜索不会把已遗忘内容当作当前事实。',
+    },
+    {
+      title: '用 rpiv-todo 保持工作计划',
+      detail: '创建带依赖的三项 Todo，完成第一项后执行 /reload 与一次 /compact，再用 /todos 核对。它通过会话分支里的工具调用快照重放状态，并不把 Todo 另存为长期记忆文件。',
+      command: 'pi install -l npm:@juicesharp/rpiv-todo@2.9.0\n# 重启后：/todos；让 Agent 建立 3 个带依赖的任务并完成第 1 个；/reload；/compact；/todos',
+      expected: '实时 overlay 显示依赖与状态；重载和压缩后当前分支仍能重建 Todo。',
+      check: '分叉会话后能解释各分支状态为何可能不同',
+      failure: '尝试制造循环依赖或引用不存在的 Todo，确认工具拒绝非法任务图。',
+    },
+    {
+      title: '用 pi-subagents 执行受控委派',
+      detail: '先跑 /subagents-doctor，再并行派生三个只读 Reviewer；需要修改时，让 Worker 进入独立 worktree，并用 fresh Reviewer 验收。前台/后台、并发槽与总 spawn 预算必须分别设置。',
+      command: 'pi install -l npm:pi-subagents@0.65.1\n# 重启后：/subagents-doctor；/subagents-fleet\n# 并行审查 correctness / tests / complexity，再串行交给隔离 worker 修复',
+      expected: 'FleetView 能看到父子关系、并行状态、失败和最终汇总；写入互不覆盖。',
+      check: '单 Agent 基线、并行收益、worktree 路径与验收人都有记录',
+      failure: '把 spawn 上限设为 3 并请求第 4 次派生，确认预算阻断且父 Agent 能解释原因。',
+    },
+    {
+      title: '用 pi-mcp-adapter 延迟发现外部工具',
+      detail: '通过 /mcp setup 接入一个已审查的测试 Server。默认代理工具只在搜索/调用时加载 Server 元数据；单次搜索、状态或调用使用 mcp，多次有依赖的调用才使用 mcpScript。不要为省几步就打开全部 directTools。',
+      command: 'pi install -l npm:pi-mcp-adapter@2.32.1\n# 重启后：/mcp setup；/mcp\n# 先 mcp({ search: "所需能力" })，再调用一个只读测试工具',
+      expected: '启动时只出现轻量代理工具；匹配到能力后才连接目标 Server，并缓存工具元数据。',
+      check: '记录加载前后工具数量、上下文占用、Server 连接时机与审批结果',
+      failure: '配置一个无效测试命令，确认健康状态与调用错误可见，且不会影响其他 Server。',
+    },
+    {
+      title: '用 context-mode 做证据卸载实验',
+      detail: 'Pi 端同时需要 Extension 与 MCP Server：把 context-mode 合并进现有 .pi/mcp.json，不覆盖其他配置。先 doctor/stats，再索引一份大日志或 JSON，只把搜索命中与摘要送回主上下文。它降低工具结果占用，但不会替代 long-term memory、权限沙箱或外部事实校验。',
+      command: 'npm install -g context-mode@1.0.169\npi install -l npm:context-mode@1.0.169\n# 将 context-mode server 合并进 .pi/mcp.json，重启后执行：ctx doctor；ctx stats；ctx index；ctx search',
+      expected: '大体积原始证据留在可检索存储中，主上下文只接收定位结果与必要片段。',
+      check: '记录原始字节数、返回上下文字节数、索引命中与 /compact 后的任务连续性',
+      failure: '让索引路径不存在并检查诊断；同时确认宿主的文件/网络权限策略仍然生效。',
+    },
+  ],
+  codeTitle: '六层状态与数据边界',
+  codeLang: 'text',
+  code: `层级 / 组件                       保存或传递什么
+观察 · pi-web-access                外部网页、仓库、PDF、视频证据
+记忆 · pi-memory                    跨会话精选事实、日志、scratchpad
+计划 · @juicesharp/rpiv-todo        当前 Session 分支的工作快照
+委派 · pi-subagents                 子会话、角色、worktree、运行预算
+接入 · pi-mcp-adapter               延迟发现的 MCP Server 与工具元数据
+节流 · context-mode                 主上下文之外的大结果、索引与命中片段
+
+必须分清：
+Session JSONL     = 可恢复的会话事件源
+MEMORY.md         = 经过选择的跨会话知识
+Todo snapshot     = 当前任务分支的工作状态
+Context store     = 可按需回取的证据，不自动成为事实
+Context window    = 此刻实际送入模型的有限输入
+
+推荐闭环：Observe → Verify → Remember → Plan → Delegate
+                     ↑                       ↓
+                 Retrieve ← Offload ← Integrate
+
+安全底线：Package / MCP / Script 都可能执行本机代码；
+Project Trust、凭据隔离、宿主 sandbox 与审批仍需单独配置。`,
+  terminal: [
+    '$ pi list',
+    'pi-web-access       0.28.0   project-local',
+    'pi-memory           0.4.2    project-local',
+    '@juicesharp/rpiv-todo 2.9.0  project-local',
+    'pi-subagents        0.65.1   project-local',
+    'pi-mcp-adapter      2.32.1   project-local',
+    'context-mode        1.0.169  extension + MCP',
+    '✓ 6 capabilities · 6 smoke checks · boundaries documented',
+  ],
+  source: 'https://pi.dev/docs/latest/packages',
+  sourceLabel: 'PI Packages 文档',
+}
+
 const courseOrder = [
   learningRoadmapModule,
   advancedModules[0],
@@ -1610,6 +1714,7 @@ const courseOrder = [
   originalModules[5],
   advancedModules[3],
   advancedModules[4],
+  ecosystemStackModule,
   advancedModules[5],
   originalModules[6],
 ]
@@ -1660,7 +1765,7 @@ const moduleEnhancements: Record<string, Partial<CourseModule>> = {
   platform: {
     level: '生产',
     practice: '最终 Capstone',
-    prerequisites: ['完成前 16 个模块', 'Git Worktree', 'SQLite 与 SSE'],
+    prerequisites: ['完成前 18 个模块', 'Git Worktree', 'SQLite 与 SSE'],
     deliverables: ['本地 Control Plane', 'Chief 任务拆解', '隔离 Executor', 'Web 事件时间线'],
     pitfalls: ['UI 直接解析模型自由文本', '绕过 Plan/Review 门禁', '失败重试覆盖历史'],
   },
@@ -1714,6 +1819,17 @@ export const conceptGroups = [
   },
   {
     index: '04',
+    title: '生态能力层',
+    summary: '把外部证据、知识、计划、委派与工具接入放在正确的数据边界。',
+    items: [
+      ['Web access', '搜索、抓取并验证网页、仓库、PDF 与视频，把外部内容变成可追溯证据。'],
+      ['Durable memory', '只保存值得跨会话复用的知识；与 Session 历史和当前任务计划分开。'],
+      ['Working state', 'Todo 表示当前分支的执行计划，可由会话事件重建，但不是外部持久数据库。'],
+      ['MCP + context', '延迟发现外部工具，并把大结果卸载到可检索存储后按需取回。'],
+    ],
+  },
+  {
+    index: '05',
     title: '调度控制面',
     summary: '多 Agent 的难点是状态、依赖和恢复，不是多开进程。',
     items: [
@@ -1724,7 +1840,7 @@ export const conceptGroups = [
     ],
   },
   {
-    index: '05',
+    index: '06',
     title: '生产执行层',
     summary: '可信输入与运行隔离是两件不同的事。',
     items: [
