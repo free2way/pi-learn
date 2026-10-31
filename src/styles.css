@@ -287,6 +287,23 @@ button:focus-visible, a:focus-visible {
 .failure-injection span { color: #d79a64; font-family: var(--code); font-size: 7px; letter-spacing: .1em; }
 .failure-injection p { margin: 6px 0 0; color: #aa8d77; font-size: 9px; line-height: 1.65; }
 
+.visual-guides { margin-top: 40px; padding-top: 28px; border-top: 1px solid var(--line); }
+.visual-guides-head { display: flex; align-items: end; justify-content: space-between; gap: 20px; }
+.visual-guides-head span { display: block; margin-bottom: 5px; color: var(--accent); font-family: var(--code); font-size: 8px; letter-spacing: .08em; }
+.visual-guides-head h2 { margin: 0; color: #e2e3df; font-size: 15px; letter-spacing: -.02em; }
+.visual-guides-head > strong { color: #73777d; font-family: var(--code); font-size: 9px; font-weight: 500; }
+.visual-guides-grid { margin-top: 15px; display: grid; gap: 15px; }
+.visual-guides figure { margin: 0; overflow: hidden; border: 1px solid var(--line); background: #0d0f12; }
+.visual-guides figure > a { position: relative; display: block; overflow: hidden; border-bottom: 1px solid var(--line); background: #08090b; }
+.visual-guides figure > a > span { position: absolute; top: 10px; left: 10px; padding: 5px 7px; background: var(--accent); color: var(--accent-ink); font-family: var(--code); font-size: 8px; font-weight: 700; }
+.visual-guides img { display: block; width: 100%; max-height: 420px; object-fit: contain; transition: transform 180ms ease; }
+.visual-guides figure > a:hover img { transform: scale(1.01); }
+.visual-guides figcaption { padding: 15px 16px 17px; }
+.visual-guides figcaption strong { color: #d4d6d1; font-size: 11px; }
+.visual-guides figcaption p { margin: 7px 0 10px; color: #85898f; font-size: 9px; line-height: 1.7; }
+.visual-guides figcaption a { display: inline-flex; align-items: center; gap: 5px; color: #8e981e; font-family: var(--code); font-size: 8px; text-decoration: none; }
+.visual-guides figcaption a:hover { color: var(--accent); }
+
 .lesson-nav { padding-top: 30px; display: flex; justify-content: space-between; }
 .lesson-nav button, .build-strip button { padding: 11px 14px; display: inline-flex; align-items: center; gap: 8px; border: 1px solid #33373c; background: transparent; color: #a4a7aa; font-size: 10px; cursor: pointer; }
 .lesson-nav button:hover:not(:disabled) { border-color: #5a5f66; color: var(--text); }

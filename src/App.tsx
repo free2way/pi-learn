@@ -366,6 +366,33 @@ function App() {
                   })}
                 </div>
 
+                {activeModule.visuals && activeModule.visuals.length > 0 && (
+                  <section className="visual-guides" aria-labelledby={`${activeModule.id}-visuals`}>
+                    <div className="visual-guides-head">
+                      <div>
+                        <span>截图导学</span>
+                        <h2 id={`${activeModule.id}-visuals`}>先定位界面，再回到本地证据</h2>
+                      </div>
+                      <strong>{activeModule.visuals.length} 张官方截图</strong>
+                    </div>
+                    <div className="visual-guides-grid">
+                      {activeModule.visuals.map((visual, index) => (
+                        <figure key={visual.src}>
+                          <a href={visual.source} target="_blank" rel="noreferrer" aria-label={`打开截图来源：${visual.title}`}>
+                            <img src={visual.src} alt={visual.alt} loading="lazy" />
+                            <span>{String(index + 1).padStart(2, '0')}</span>
+                          </a>
+                          <figcaption>
+                            <strong>{visual.title}</strong>
+                            <p>{visual.caption}</p>
+                            <a href={visual.source} target="_blank" rel="noreferrer">查看官方原图 <ExternalLink size={11} /></a>
+                          </figcaption>
+                        </figure>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
                 <div className="lesson-nav">
                   <button
                     disabled={moduleIndex === 0}

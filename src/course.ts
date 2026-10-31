@@ -1,3 +1,5 @@
+import { herdrRuntimeModule, ompEngineeringModule } from './additionalCourses'
+
 export type LabStep = {
   title: string
   detail: string
@@ -5,6 +7,14 @@ export type LabStep = {
   expected: string
   check: string
   failure?: string
+}
+
+export type VisualGuide = {
+  title: string
+  src: string
+  alt: string
+  caption: string
+  source: string
 }
 
 export type CourseModule = {
@@ -30,6 +40,7 @@ export type CourseModule = {
   deliverables?: string[]
   pitfalls?: string[]
   version?: string
+  visuals?: VisualGuide[]
 }
 
 const originalModules: CourseModule[] = [
@@ -1140,7 +1151,7 @@ const textbookModules: CourseModule[] = [
       {
         title: '取得固定课程历史',
         detail: '克隆课程分支后切到 course-v1/14。不要使用浅克隆，因为 checkpoint/practice 需要读取每章 parent 与 target 历史。先记录 HEAD 和 tag，确保所有人从同一教材版本开始。',
-        command: 'git clone --branch course/build-your-own-pi https://github.com/hahhforest/pi.git pi-kernel-course\ncd pi-kernel-course\ngit checkout course-v1/14\nnpm install\ngit rev-parse --short HEAD',
+        command: 'git clone --branch course/build-your-own-pi https://github.com/free2way/pi-learn.git pi-kernel-course\ncd pi-kernel-course\ngit checkout course-v1/14\nnpm install\ngit rev-parse --short HEAD',
         expected: 'HEAD 为 d2bfac2；packages/pi-course 存在，npm install 完成。',
         check: 'npm run checkpoint -w @pi/course -- 00 能显示 parent、target、教学文件与聚焦测试',
       },
@@ -1216,7 +1227,7 @@ const textbookModules: CourseModule[] = [
       'checkpoint 04  deterministic model',
       'checkpoint 05  11/11 provider tests',
     ],
-    source: 'https://github.com/hahhforest/pi-textbook',
+    source: 'https://github.com/free2way/pi-learn/tree/textbook',
     sourceLabel: '社区教材 · CC BY 4.0',
   },
   {
@@ -1311,7 +1322,7 @@ cancel → stop new work → await/normalize current batch → one turn_end`,
       'atomic edit       original preserved on failure',
       '✓ checkpoint 06–08 regression passed',
     ],
-    source: 'https://github.com/hahhforest/pi-textbook/blob/main/content/chapters/07-agent-loop.md',
+    source: 'https://github.com/free2way/pi-learn/blob/textbook/content/chapters/07-agent-loop.md',
     sourceLabel: '社区教材 · CC BY 4.0',
   },
   {
@@ -1404,7 +1415,7 @@ Context for next request (derived view)
       'context budget   complete interactions only',
       '✓ checkpoint 09–11 regression passed',
     ],
-    source: 'https://github.com/hahhforest/pi-textbook/blob/main/content/chapters/11-context-compaction.md',
+    source: 'https://github.com/free2way/pi-learn/blob/textbook/content/chapters/11-context-compaction.md',
     sourceLabel: '社区教材 · CC BY 4.0',
   },
   {
@@ -1502,7 +1513,7 @@ Context for next request (derived view)
       'eval           fresh fixture · declared observations only',
       '✓ checkpoint 12–14 + full regression passed',
     ],
-    source: 'https://github.com/hahhforest/pi-textbook/blob/main/content/chapters/14-eval-capstone.md',
+    source: 'https://github.com/free2way/pi-learn/blob/textbook/content/chapters/14-eval-capstone.md',
     sourceLabel: '社区教材 · CC BY 4.0',
   },
 ]
@@ -1701,6 +1712,8 @@ const courseOrder = [
   learningRoadmapModule,
   advancedModules[0],
   originalModules[0],
+  ompEngineeringModule,
+  herdrRuntimeModule,
   originalModules[1],
   advancedModules[1],
   textbookModules[0],
@@ -1815,6 +1828,7 @@ export const conceptGroups = [
       ['Extension API', '监听生命周期、注册工具/命令/UI、拦截行为。'],
       ['SDK', '在同一 Node.js 进程获得类型安全和完整状态访问。'],
       ['RPC', '以 JSONL 跨进程控制，适合多语言与故障隔离。'],
+      ['OMP', '在 PI 思路上集成 LSP、结构化编辑、调试器与隔离 task 子 Agent。'],
     ],
   },
   {
@@ -1846,6 +1860,7 @@ export const conceptGroups = [
     items: [
       ['Project Trust', '只控制是否加载项目资源，不限制工具执行。'],
       ['Worktree', '隔离并行写 Agent 的 Git 文件状态。'],
+      ['Herdr', '承载 PI、OMP 等真实终端，提供持久布局、状态发现、prompt/wait 与远程入口。'],
       ['Sandbox', '用容器/VM/策略层限制文件、网络和凭据。'],
       ['Observability', '按 Run 记录状态、工具、token、成本与等待时间。'],
     ],

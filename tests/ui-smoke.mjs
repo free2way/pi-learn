@@ -1,7 +1,12 @@
 import assert from 'node:assert/strict'
+import { existsSync } from 'node:fs'
 import { chromium } from 'playwright'
 
-const browser = await chromium.launch({ headless: true })
+const systemChrome = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+const browser = await chromium.launch({
+  headless: true,
+  ...(existsSync(systemChrome) ? { executablePath: systemChrome } : {}),
+})
 const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } })
 const errors = []
 page.on('console', (message) => {
@@ -20,7 +25,18 @@ await page.getByText(/Plan\/Reason → Action → Observation/).waitFor()
 await page.getByRole('button', { name: /设计 Agent 的上下文/ }).click()
 await page.getByRole('heading', { name: '设计 Agent 的上下文' }).waitFor()
 await page.getByRole('button', { name: '标记为已验证' }).click()
-assert.match(await page.locator('.top-progress').innerText(), /1\s*\/\s*114 steps/)
+assert.match(await page.locator('.top-progress').innerText(), /1\s*\/\s*127 steps/)
+
+await page.getByRole('button', { name: /用 OMP 建立并行工程闭环/ }).click()
+await page.getByRole('heading', { name: '用 OMP 建立并行工程闭环' }).waitFor()
+await page.getByText('截图导学', { exact: true }).waitFor()
+assert.equal(await page.locator('.visual-guides img').count(), 2, 'OMP 截图导学缺失')
+await page.screenshot({ path: '/tmp/pi-agent-lab-omp.png', fullPage: true })
+await page.getByRole('button', { name: /用 Herdr 驾驭 PI 与 OMP/ }).click()
+await page.getByRole('heading', { name: '用 Herdr 驾驭 PI 与 OMP' }).waitFor()
+await page.getByText(/Herdr 负责：终端、布局、detach/).waitFor()
+assert.equal(await page.locator('.visual-guides img').count(), 1, 'Herdr 截图导学缺失')
+await page.screenshot({ path: '/tmp/pi-agent-lab-herdr.png', fullPage: true })
 
 await page.getByRole('button', { name: /组装 PI 的六层能力栈/ }).click()
 await page.getByRole('heading', { name: '组装 PI 的六层能力栈' }).waitFor()

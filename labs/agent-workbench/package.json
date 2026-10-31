@@ -1,0 +1,10 @@
+{
+  "name": "free2way-agent-workbench",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/baseline.test.mjs",
+    "acceptance": "RUN_ACCEPTANCE=1 node --test test/*.test.mjs"
+  }
+}
+
