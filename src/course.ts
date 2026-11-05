@@ -1,4 +1,4 @@
-import { herdrRuntimeModule, ompEngineeringModule } from './additionalCourses'
+import { herdrRuntimeModule, ompEngineeringModule, piDurableModule } from './additionalCourses'
 
 export type LabStep = {
   title: string
@@ -1724,6 +1724,7 @@ const courseOrder = [
   advancedModules[2],
   originalModules[3],
   originalModules[4],
+  piDurableModule,
   originalModules[5],
   advancedModules[3],
   advancedModules[4],
@@ -1778,7 +1779,7 @@ const moduleEnhancements: Record<string, Partial<CourseModule>> = {
   platform: {
     level: '生产',
     practice: '最终 Capstone',
-    prerequisites: ['完成前 18 个模块', 'Git Worktree', 'SQLite 与 SSE'],
+    prerequisites: ['完成前 21 个模块', 'Git Worktree', 'SQLite 与 SSE'],
     deliverables: ['本地 Control Plane', 'Chief 任务拆解', '隔离 Executor', 'Web 事件时间线'],
     pitfalls: ['UI 直接解析模型自由文本', '绕过 Plan/Review 门禁', '失败重试覆盖历史'],
   },
@@ -1829,6 +1830,7 @@ export const conceptGroups = [
       ['SDK', '在同一 Node.js 进程获得类型安全和完整状态访问。'],
       ['RPC', '以 JSONL 跨进程控制，适合多语言与故障隔离。'],
       ['OMP', '在 PI 思路上集成 LSP、结构化编辑、调试器与隔离 task 子 Agent。'],
+      ['Durable Harness', '用原子提交、持久 Task、typed Document 与 requestId 恢复应用级 Agent 工作。'],
     ],
   },
   {
